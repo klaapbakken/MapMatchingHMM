@@ -1,0 +1,7 @@
+
+*.iml
+*.xml
+*.pyc
+.vscode/.ropeproject/objectdb
+.vscode/.ropeproject/config.py
+.vscode/settings.json
