@@ -38,11 +38,14 @@ def simulate_route(highway_dict, starting_node, starting_highway, intersections,
 
 def simulate_gps_signals(route, node_dict, variance, polling_rate, max_speed):
     measurements = []
+    measurement_edges = []
     segments, coordinate_array = create_segment_list(route, node_dict)
     measurements.append((coordinate_array[0, 0] + np.random.normal(scale=variance), coordinate_array[0, 1] + np.random.normal(scale=variance)))
+    measurement_edges.append((route[0], route[1]))
     remaining_space = 0
     offset = 0
     for i in range(len(route) - 1):
+        edge = (route[i], route[i + 1])
         #Segment
         s_i = segments[i]
         #Speed limit
@@ -53,7 +56,6 @@ def simulate_gps_signals(route, node_dict, variance, polling_rate, max_speed):
         t_i = d_i/l_i
         #Number of measurements
         m_i = t_i*polling_rate
-        #Number of measurements, rounded to nearest integer below
         #Distance between each measurement
         dpm = d_i/m_i
         #Slope
@@ -75,6 +77,7 @@ def simulate_gps_signals(route, node_dict, variance, polling_rate, max_speed):
             x = coordinate_array[i, 0]
             measurements.append((x + direction*offset + np.random.normal(scale=variance)
                 , s_i(x + direction*offset) + np.random.normal(scale=variance)))
+            measurement_edges.append(edge)
             #New distance on segment has been covered
             available_space -= required_space
             #Residual distance is zero after adding it once on one segment
@@ -84,4 +87,4 @@ def simulate_gps_signals(route, node_dict, variance, polling_rate, max_speed):
         #Residual distance is updated.
         remaining_space += available_space
         offset = 0
-    return np.array(measurements)
+    return np.array(measurements), np.array(measurement_edges)

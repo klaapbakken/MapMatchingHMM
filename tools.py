@@ -24,4 +24,11 @@ def state_sequence_to_node_sequence(state_sequence, state_space):
             node_sequence.append(edge[1])
 
     return node_sequence
-        
+
+def get_accuracy_of_estimate(measurement_edges, estimated_states, state_space):
+    N = estimated_states.shape[0]
+    estimated_edges = np.array([state_space[int(state)]['edge'] for state in estimated_states]) 
+    no = 0
+    for i in range(N):
+        no += int(np.all(np.array(measurement_edges)[i, :] == estimated_edges[i, :]))
+    return no/N

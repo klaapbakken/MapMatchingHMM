@@ -49,9 +49,9 @@ def add_reachable_edges(node_id, all_edges, reachable_edges, i, limit):
         return reachable_edges
 
 def get_reachable_edges(starting_state_id, state_space, accepted_edges, limit): 
-    reachable_edges = set()
     node_a = state_space[starting_state_id]['edge'][0]
     node_b = state_space[starting_state_id]['edge'][1]
+    reachable_edges = set(list([(node_a, node_b), (node_b, node_a)]))
     add_reachable_edges(node_a, accepted_edges, reachable_edges, 0, limit)
     add_reachable_edges(node_b, accepted_edges, reachable_edges, 0, limit)
     return reachable_edges

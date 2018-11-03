@@ -17,10 +17,10 @@ from hmm import viterbi
 from hmm import backward_recursions
 from hmm import forward_recursions
 
-from visualization import plot_road_network
-from visualization import plot_route
+from visualization import plot_results
 
 from tools import state_sequence_to_node_sequence
+from tools import get_accuracy_of_estimate
 
 import random
 import numpy as np
@@ -28,6 +28,7 @@ import numpy as np
 import sys
 
 password = sys.argv[1]
+P_source = sys.argv[2]
 
 ways = query_ways_postgis_db([9.738344,61.590963,9.777225,61.604356], password)
 
@@ -41,17 +42,28 @@ nodes = query_nodes_postgis_db(required_nodes, password)
 
 node_dict = create_node_dict(nodes)
 
+state_space = create_state_space_representations(accepted_highways, node_dict)
+
+intersections = find_intersections(highway_dict, node_dict)
+
+starting_highway = random.choice(list(highway_dict.keys()))
+starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
+
+
+if P_source == 'cache':
+    P = np.load("P.npy")
+else:
+    P = transition_probabilities(state_space, 5, 100)
+    np.save('P', P)
+
 intersections = find_intersections(highway_dict, node_dict)
 
 starting_highway = random.choice(list(highway_dict.keys()))
 starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 simulated_route = simulate_route(highway_dict, starting_node, starting_highway, intersections, 100)
-simulated_measurements = simulate_gps_signals(simulated_route, node_dict, 5, 1, [10]*len(simulated_route))
+simulated_measurements, measurement_edges = simulate_gps_signals(simulated_route, node_dict, 5, 1/10, [5]*len(simulated_route))
 
-state_space = create_state_space_representations(accepted_highways, node_dict)
-
-P = transition_probabilities(state_space, 5, 100)
 l = observation_emissions(simulated_measurements, state_space, 5)
 
 N = len(state_space)
@@ -62,10 +74,7 @@ beta = backward_recursions(P, l, alpha)
 estimated_states = viterbi(alpha, beta, P, l, np.array([1/N]*N))
 estimated_route = state_sequence_to_node_sequence(estimated_states, state_space)
 
+print(type(state_space))
 
-print(estimated_route, simulated_route)
-plot_road_network(accepted_highways, node_dict, intersections)
-plot_route(accepted_highways, node_dict, simulated_route, measurements=simulated_measurements)
-plot_route(accepted_highways, node_dict, estimated_route, measurements=simulated_measurements)
-
-
+print("Accuracy: {}".format(get_accuracy_of_estimate(measurement_edges, estimated_states, state_space)))
+plot_results(state_space, node_dict, simulated_measurements, measurement_edges, estimated_states)
