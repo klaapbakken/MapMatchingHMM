@@ -45,11 +45,11 @@ def plot_route(highways, node_dict, route, measurements=None):
         plt.scatter(measurements[:, 0], measurements[:, 1], s=50, c='r')
     plt.show()
 
-def plot_edge(edge, node_dict, color, alpha=1):
+def plot_edge(edge, node_dict, color, alpha=1, linestyle='-'):
     node_ids = list(edge)
     coordinate_array = get_coordinates_of_nodes(node_ids, node_dict)
     utm_coordinate_array = convert_to_utm(coordinate_array)
-    plt.plot(utm_coordinate_array[:, 0], utm_coordinate_array[:, 1], c=color, alpha=alpha)
+    plt.plot(utm_coordinate_array[:, 0], utm_coordinate_array[:, 1], c=color, alpha=alpha, linestyle=linestyle)
 
 def plot_results(state_space, node_dict, measurements, true_edges, estimated_states):
     for state in state_space:
@@ -58,7 +58,7 @@ def plot_results(state_space, node_dict, measurements, true_edges, estimated_sta
     for edge in true_edges:
         plot_edge(edge, node_dict, color='g', alpha=0.8)
     for state in estimated_states:
-        plot_edge(state_space[int(state)]['edge'], node_dict, color='y')
+        plot_edge(state_space[int(state)]['edge'], node_dict, color='y', linestyle=':')
     ax = plt.gca()
     ax.set_xlim([np.min(measurements[:, 0])-100, np.max(measurements[:, 0])+100])
     ax.set_ylim([np.min(measurements[:, 1])-100, np.max(measurements[:, 1])+100])

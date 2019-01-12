@@ -117,7 +117,6 @@ def backward_recursions(P, l, alpha):
     for t in range(n_observations - 2, -1, -1):
         for i in range(n_states):
             beta[t, i] = np.sum(P[i, :]*(l[t + 1, :]/np.sum(l[t+1, :]))*beta[t + 1, :])
-    
     return beta
 
 def viterbi(alpha, beta, P, l, pi):

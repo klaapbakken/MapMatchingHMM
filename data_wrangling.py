@@ -80,6 +80,7 @@ def create_state_space_representations(highways, node_dict):
 
                 state = {'id' : id_tag,
                 'edge' : (node_a['data']['id'], node_b['data']['id']),
+                'edge_set' : set((node_a['data']['id'], node_b['data']['id'])),
                 'function' : create_segment(coords_a.reshape((2,)), coords_b.reshape((2,))),
                 'domain' : (coords_a[0, 0], coords_b[0, 0])
                 }
