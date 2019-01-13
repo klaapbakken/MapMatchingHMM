@@ -1,6 +1,8 @@
 from hmm import closest_point
 
-def spatially_closest_states(measurement_array):
+import numpy as np
+
+def spatially_closest_states(measurement_array, state_space):
     closest_states = list()
     for row in range(measurement_array.shape[0]):
         z = measurement_array[row, :]

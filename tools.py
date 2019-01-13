@@ -45,4 +45,4 @@ def edges_to_states(edge_array, state_space):
     states = list()
     for row in range(edge_array.shape[0]):
         states.append(edge_to_state(edge_array[row, :], state_space))
-    return states
+    return states 

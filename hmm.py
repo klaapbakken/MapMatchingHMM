@@ -41,8 +41,10 @@ def search_for_connected_nodes(node_id, all_edges):
 def add_reachable_edges(node_id, all_edges, reachable_edges, i, limit):
     if i < limit:
         reachable_nodes = search_for_connected_nodes(node_id, all_edges)
-        connected_edges = [(node_id, reachable_node) for reachable_node in reachable_nodes] 
+        connected_edges = [(node_id, reachable_node) for reachable_node in reachable_nodes]
+        reversed_connected_edges = [(edge[1], edge[0]) for edge in connected_edges]
         reachable_edges.update(connected_edges)
+        reachable_edges.update(reversed_connected_edges)
         for reachable_node_id in reachable_nodes:
             add_reachable_edges(reachable_node_id, all_edges, reachable_edges, i + 1, limit)
     else:
@@ -72,14 +74,50 @@ def transition_probabilities(state_space, edges_to_cross, required_proximity):
         print(state_id)
         close_states = get_states_in_proximity(state_id, state_space, required_proximity)
         close_edges = [state_space[state_id]['edge'] for state_id in close_states]
+        reversed_close_edges = [(edge[1], edge[0]) for edge in close_edges]
+        close_edge_set = set(close_edges).union(set(reversed_close_edges))
         reachable_edges = get_reachable_edges(state_id, state_space, close_edges, edges_to_cross)
-        allowed_edges = set(close_edges).intersection(reachable_edges)
+        allowed_edges = close_edge_set.intersection(reachable_edges)
         allowed_state_ids = [state['id'] for state in state_space if state['edge'] in allowed_edges]
         if len(allowed_state_ids) == 0:
             tp[state_id, state_id] = 1
         else:
             weight = 1/len(allowed_state_ids)
             tp[state_id, np.array(allowed_state_ids)] = weight
+    return tp
+
+def distance_from_endpoint_to_segment(line_domain, line_function, endpoint_domain, endpoint_function, endpoint_index):
+    endpoint = np.array([endpoint_domain[endpoint_index], endpoint_function(endpoint_domain[endpoint_index])])
+    x, y = closest_point(line_function, line_domain, endpoint)
+    return np.linalg.norm(np.array([x, y]) - endpoint)
+
+#Import closest_point(state_function, state_domain, z)
+def distance_between_segments(state_id_a, state_id_b, state_space):
+    state_a_function = state_space[state_id_a]['function']
+    state_a_domain = state_space[state_id_a]['domain']
+    state_b_function = state_space[state_id_b]['function']
+    state_b_domain = state_space[state_id_b]['domain']
+    #Assumes state_space is sorted on state_space['id'] ascending. Confirm this.
+    a_to_first_endpoint_of_b = distance_from_endpoint_to_segment(state_a_domain, state_a_function,\
+                                                                 state_b_domain, state_b_function, 0)
+    a_to_second_endpoint_of_b = distance_from_endpoint_to_segment(state_a_domain, state_a_function,\
+                                                                 state_b_domain, state_b_function, 1)
+    b_to_first_endpoint_of_a = distance_from_endpoint_to_segment(state_b_domain, state_b_function,\
+                                                                 state_a_domain, state_a_function, 0)
+    b_to_second_endpoint_of_a = distance_from_endpoint_to_segment(state_b_domain, state_b_function,\
+                                                                 state_a_domain, state_a_function, 1)
+    return np.min(np.array([a_to_first_endpoint_of_b, a_to_second_endpoint_of_b, b_to_first_endpoint_of_a, b_to_second_endpoint_of_a]))   
+
+def alternative_transition_probabilties(state_space, speed, frequency, variance, max_distance):
+    n = len(state_space)
+    expected_distance = speed/frequency
+    tp = np.zeros((n,n))
+    for i in range(n):
+        dist_calc = lambda j: distance_between_segments(i, j, state_space)
+        for j in range(n):
+            d_ij = dist_calc(j)
+            tp[i, j] = 1/(np.sqrt(2*np.pi)*variance)*np.exp(-(d_ij - expected_distance)**2/(2*variance**2))
+        tp[i, :] /= np.sum(tp[i, :])
     return tp
 
 def observation_emissions(observations, state_space, variance):
