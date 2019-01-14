@@ -108,7 +108,7 @@ def distance_between_segments(state_id_a, state_id_b, state_space):
                                                                  state_a_domain, state_a_function, 1)
     return np.min(np.array([a_to_first_endpoint_of_b, a_to_second_endpoint_of_b, b_to_first_endpoint_of_a, b_to_second_endpoint_of_a]))   
 
-def alternative_transition_probabilties(state_space, speed, frequency, variance, max_distance):
+def alternative_transition_probabilties(state_space, speed, frequency, exp_scale, max_distance):
     n = len(state_space)
     expected_distance = speed/frequency
     tp = np.zeros((n,n))
@@ -116,8 +116,54 @@ def alternative_transition_probabilties(state_space, speed, frequency, variance,
         dist_calc = lambda j: distance_between_segments(i, j, state_space)
         for j in range(n):
             d_ij = dist_calc(j)
-            tp[i, j] = 1/(np.sqrt(2*np.pi)*variance)*np.exp(-(d_ij - expected_distance)**2/(2*variance**2))
+            if d_ij < max_distance:
+                tp[i, j] = exp_scale*np.exp(-exp_scale*d_ij)
         tp[i, :] /= np.sum(tp[i, :])
+    return tp
+
+def create_connection_dictionary(state_space):
+    connections = dict()
+    for state in state_space:
+        state_edges = state['edge']
+        connected_states = list()
+        for edge in state_edges:
+            for potentially_connected_state in state_space:
+                if edge in potentially_connected_state['edge_set'] and potentially_connected_state != state:
+                    connected_states.append(potentially_connected_state['id'])
+        connections[state['id']] = connected_states
+    return connections
+
+def recursive_neighbour_search(state_id, dictionary_of_reachable_states, connection_dictionary, state_space, distance, maximum_distance):
+    if state_id not in dictionary_of_reachable_states:
+        dictionary_of_reachable_states[state_id] = distance
+    elif dictionary_of_reachable_states[state_id] > distance:
+        dictionary_of_reachable_states[state_id] = distance
+    else:
+        return
+    domain = state_space[state_id]['domain']
+    function = state_space[state_id]['function']
+    state_length = np.linalg.norm(np.array([domain[0], function(domain[0])]) - np.array([domain[1], function(domain[1])]))
+    connected_states = connection_dictionary[state_id]
+    for state in connected_states:
+        new_distance = state_length + distance
+        if new_distance < maximum_distance:
+            recursive_neighbour_search(state, dictionary_of_reachable_states,\
+                                       connection_dictionary, state_space, new_distance, maximum_distance)
+    return dictionary_of_reachable_states
+
+def transition_probabilties_by_weighting_route_length(state_space, beta, max_distance):
+    connection_dictionary = create_connection_dictionary(state_space)
+    n = len(state_space)
+    #Create matrix
+    tp = np.zeros((n,n))
+    #For each state
+    for state_id in range(n):
+        state_reachability_dictionary = recursive_neighbour_search(state_id, dict(),\
+         connection_dictionary, state_space, 0, max_distance)
+        for reachable_state in state_reachability_dictionary:
+            d = state_reachability_dictionary[reachable_state]
+            tp[state_id, reachable_state] = beta*np.exp(-beta*d)
+        tp[state_id, :] /= np.sum(tp[state_id, :])
     return tp
 
 def observation_emissions(observations, state_space, variance):

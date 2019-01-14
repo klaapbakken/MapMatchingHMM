@@ -12,7 +12,7 @@ from simulation import simulate_route
 from simulation import simulate_gps_signals
 
 from hmm import observation_emissions
-from hmm import alternative_transition_probabilties
+from hmm import transition_probabilties_by_weighting_route_length
 from hmm import viterbi
 from hmm import backward_recursions
 from hmm import forward_recursions
@@ -57,17 +57,17 @@ starting_highway = random.choice(list(highway_dict.keys()))
 starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 speed = 5
-frequency = 1/15
-measurement_variance = 5
-transition_variance = 2
-maximum_distance = speed/frequency * 3
+frequency = 1/10
+measurement_variance = 15
+beta = 1/100
+maximum_distance = 200
 
 
 if P_source == 'cache':
     # = np.load("P.npy")
     P = np.ones((len(state_space), len(state_space)))/len(state_space)
 else:
-    P = alternative_transition_probabilties(state_space, speed, frequency, transition_variance, maximum_distance)
+    P = transition_probabilties_by_weighting_route_length(state_space, beta, maximum_distance)
     np.save('P', P)
 
 intersections = find_intersections(highway_dict, node_dict)
@@ -79,7 +79,7 @@ simulated_route = simulate_route(highway_dict, starting_node, starting_highway, 
 simulated_measurements, measurement_edges = simulate_gps_signals(simulated_route, node_dict, measurement_variance, frequency, [speed]*len(simulated_route))
 measurement_states = edges_to_states(measurement_edges, state_space)
 
-l = observation_emissions(simulated_measurements, state_space, measurement_variance)
+l = observation_emissions(simulated_measurements, state_space, 2)
 
 N = len(state_space)
 alpha = forward_recursions(P, l, np.array([1/N]*N))
