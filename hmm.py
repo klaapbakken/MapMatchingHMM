@@ -158,6 +158,8 @@ def transition_probabilties_by_weighting_route_length(state_space, beta, max_dis
     tp = np.zeros((n,n))
     #For each state
     for state_id in range(n):
+        if np.mod(n, 100) == 0:
+            print("Iteration: {}".format(state_id))
         state_reachability_dictionary = recursive_neighbour_search(state_id, dict(),\
          connection_dictionary, state_space, 0, max_distance)
         for reachable_state in state_reachability_dictionary:

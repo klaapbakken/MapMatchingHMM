@@ -35,7 +35,9 @@ P_source = sys.argv[2]
 
 random.seed(3265)
 
-ways = query_ways_postgis_db([10.3930385052,63.4313222082,10.4054088532,63.4347422694], password)
+print("Fetching and processing data..")
+
+ways = query_ways_postgis_db([10.366042,63.421885,10.408271,63.435746], password)
 
 accepted_highways = get_accepted_highways(ways)
 
@@ -57,12 +59,12 @@ starting_highway = random.choice(list(highway_dict.keys()))
 starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 speed = 5
-frequency = 1/10
-measurement_variance = 15
+frequency = 1/15
+measurement_variance = 5
 beta = 1/100
 maximum_distance = 200
 
-
+print("Calculating transition probabilities..")
 if P_source == 'cache':
     # = np.load("P.npy")
     P = np.ones((len(state_space), len(state_space)))/len(state_space)
@@ -75,17 +77,20 @@ intersections = find_intersections(highway_dict, node_dict)
 starting_highway = random.choice(list(highway_dict.keys()))
 starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
+print("Simulating route..")
+
 simulated_route = simulate_route(highway_dict, starting_node, starting_highway, intersections, 100)
 simulated_measurements, measurement_edges = simulate_gps_signals(simulated_route, node_dict, measurement_variance, frequency, [speed]*len(simulated_route))
 measurement_states = edges_to_states(measurement_edges, state_space)
 
-l = observation_emissions(simulated_measurements, state_space, 2)
+l = observation_emissions(simulated_measurements, state_space, 1)
 
+print("Running Forward-backward algorithm..")
 N = len(state_space)
 alpha = forward_recursions(P, l, np.array([1/N]*N))
-
 beta = backward_recursions(P, l, alpha)
 
+print("Running Viterbi..")
 estimated_states = viterbi(alpha, beta, P, l, np.array([1/N]*N))
 
 naive_estimate = spatially_closest_states(simulated_measurements, state_space)
