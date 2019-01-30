@@ -37,7 +37,8 @@ random.seed(3265)
 
 print("Fetching and processing data..")
 
-ways = query_ways_postgis_db([10.366042,63.421885,10.408271,63.435746], password)
+bbox = [10.366042,63.421885,10.408271,63.435746]
+ways = query_ways_postgis_db(bbox, password)
 
 accepted_highways = get_accepted_highways(ways)
 
@@ -79,7 +80,7 @@ starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 print("Simulating route..")
 
-simulated_route = simulate_route(highway_dict, starting_node, starting_highway, intersections, 100)
+simulated_route = simulate_route(highway_dict, starting_node, starting_highway, intersections, 500)
 simulated_measurements, measurement_edges = simulate_gps_signals(simulated_route, node_dict, measurement_variance, frequency, [speed]*len(simulated_route))
 measurement_states = edges_to_states(measurement_edges, state_space)
 
