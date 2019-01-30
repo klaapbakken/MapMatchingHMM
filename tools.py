@@ -45,4 +45,15 @@ def edges_to_states(edge_array, state_space):
     states = list()
     for row in range(edge_array.shape[0]):
         states.append(edge_to_state(edge_array[row, :], state_space))
-    return states 
+    return states
+
+def generate_base_locations(bbox, n):
+    bbox_array = np.array(bbox).reshape(2,2)
+
+    ll_corner = utm.from_latlon(bbox[1], bbox[0])[:2]
+    ur_corner = utm.from_latlon(bbox[3], bbox[2])[:2]
+
+    x = np.random.uniform(ll_corner[0], ur_corner[0], n)
+    y = np.random.uniform(ll_corner[1], ur_corner[1], n)
+    
+    return np.array(list(zip(x,y)))

@@ -12,6 +12,7 @@ from data_wrangling import get_coordinates_of_nodes
 
 from tools import convert_to_utm
 
+
 def plot_highway(highway, node_dict, color, alpha=1):
     node_ids = highway['data']['nd']
     coordinate_array = get_coordinates_of_nodes(node_ids, node_dict)
