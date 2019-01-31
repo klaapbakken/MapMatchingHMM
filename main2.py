@@ -37,7 +37,8 @@ password = sys.argv[1]
 
 print("Fetching and processing data..")
 
-bbox = [10.366042,63.421885,10.408271,63.435746]
+#bbox = [10.366042,63.421885,10.408271,63.435746]
+bbox = [10.411165,63.415631,10.432451,63.425788]
 ways = query_ways_postgis_db(bbox, password)
 
 accepted_highways = get_accepted_highways(ways)
