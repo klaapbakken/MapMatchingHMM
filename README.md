@@ -13,5 +13,6 @@ python main2_remote.py
 ```
 
 Requirements are listed in requirements.txt. Installation instructions (using conda) can be seen at the top of the file.
+Use ``pip install utm`` and ``pip install osmapi`` to get remaining dependencies.
 
 Please note that this is a work in progresss.
