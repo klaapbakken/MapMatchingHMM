@@ -65,9 +65,9 @@ polling_frequency = 1/15
 gps_variance = 1
 transition_decay = 1/100
 maximum_route_length = 200
-no_of_bases = 5
+no_of_bases = 1
 base_max_range = 500
-route_length = 200
+route_length = 50
 
 print("Simulating route..")
 

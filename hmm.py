@@ -1,5 +1,7 @@
 import numpy as np
 
+from math import fsum
+
 def closest_point(state_function, state_domain, z):
     b = state_function(0)
     a = state_function(1) - b
@@ -186,9 +188,10 @@ def forward_recursions(P, l, pi):
     
     for t in range(n_observations - 1):
         for j in range(n_states):
-            alpha[t+1, j] = np.sum(alpha[t, :]*P[:, j])*l[t, j]
-            C_t = np.sum(alpha[t+1, :])
-            alpha[t+1, :] /= C_t
+            alpha[t+1, j] = np.matmul(alpha[t, :], P[:, j])*l[t, j]
+        #C_t = np.sum(alpha[t+1, :])
+        #print(C_t)
+        #alpha[t+1, :] /= C_t
     
     return alpha
 

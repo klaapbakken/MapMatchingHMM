@@ -78,6 +78,7 @@ print("Calculating emission probabilities..")
 ep = emission_probabilities(gps_measurements, gps_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
 
 print("Running Forward-backward algorithm..")
+
 N = len(state_space)
 alpha = forward_recursions(tp, ep, np.array([1/N]*N))
 beta = backward_recursions(tp, ep, alpha)
@@ -89,3 +90,27 @@ naive_estimate = spatially_closest_states(gps_measurements, state_space)
 
 print("Accuracy with naive method: {}".format(np.mean(measurement_states == naive_estimate)))
 print("Accuracy with hidden markov model: {}".format(np.mean(estimated_states == measurement_states)))
+
+from visualization import MapMatchingVisualization
+
+viz1 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
+viz1.plot_road_network('black', 0.5, 0.4)
+viz1.plot_node_sequence(simulated_route, 'blue')
+viz1.plot_bases(base_locations, 'green', 10)
+viz1.plot_base_range(base_locations, base_max_range)
+
+viz2 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
+viz2.plot_road_network('black', 0.5, 0.4)
+viz2.plot_state_sequence(np.array(measurement_states), 'magenta', 0.5, label=True)
+viz2.plot_coordinate_array(gps_measurements, 'black', 10, signal_measurements=signal_measurements)
+viz2.shrink_to_fit_state_sequence(np.array(measurement_states), 0)
+
+viz3 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
+viz3.plot_road_network('black', 0.5, 0.4)
+viz3.plot_estimation_performance(estimated_states.astype(int), np.array(measurement_states).astype(int), 5, 0.3)
+viz3.shrink_to_fit_state_sequence(estimated_states.astype(int), 0)
+
+viz4 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
+viz4.plot_road_network('black', 0.5, 0.4)
+viz4.plot_estimation_performance(naive_estimate.astype(int), np.array(measurement_states).astype(int), 5, 0.3)
+viz4.shrink_to_fit_state_sequence(naive_estimate.astype(int), 0)

@@ -15,11 +15,23 @@ def probability_of_signal_given_state(signal_strength, state, base_position, max
     else:
         return bernoulli.pmf(1, max(0, 1 - distance_to_state/max_range))*beta.pdf(signal_strength, 2, 5*distance_to_state/max_range)
 
-def probability_of_position_given_state(position, state, variance):
+def probability_of_position_given_state(position, state, variance, position_measurements, position_index):
     state_function = state['function']
     state_domain = state['domain']
+    if np.isnan(position).any():
+        variance = 1e12
+        position = locate_last_non_missing_position(position_index, position_measurements)
     closest_x, closest_y = closest_point(state_function, state_domain, position)
     return 1/(np.sqrt(2*np.pi)*variance)*np.exp(-1*np.linalg.norm([position[0] - closest_x, position[1] - closest_y])/(2*variance**2))
+
+def locate_last_non_missing_position(position_index, position_measurements):
+    for position in reversed(position_measurements[:position_index, :]):
+        if not np.isnan(position).any():
+            return position
+    for position in position_measurements[position_index:, :]:
+        if not np.isnan(position).any():
+            return position
+    return np.apply_along_axis(np.mean, 0, position_measurements[np.invert(np.isnan(position_measurements))].reshape(-1, 2))
 
 def emission_probabilities(position_measurements, gps_variance, signal_measurements, base_positions, base_ranges, state_space):
     ep = np.ones((position_measurements.shape[0], len(state_space)))
@@ -27,7 +39,7 @@ def emission_probabilities(position_measurements, gps_variance, signal_measureme
         for column, state in enumerate(state_space):
             for i, signal_strength in enumerate(signal_measurements[row, :]):
                 ep[row, column] = ep[row, column]*probability_of_signal_given_state(signal_strength, state, base_positions[i], base_ranges[i])
-            ep[row, column] = ep[row, column]*probability_of_position_given_state(position, state, gps_variance)
+            ep[row, column] = ep[row, column]*probability_of_position_given_state(position, state, gps_variance, position_measurements, row)
     return ep
                 
     #Return, for each observation (vector), find the probability of making 
