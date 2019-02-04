@@ -27,6 +27,7 @@ from naive_estimation import spatially_closest_states
 
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 import sys
 
@@ -114,3 +115,5 @@ viz4 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 
 viz4.plot_road_network('black', 0.5, 0.4)
 viz4.plot_estimation_performance(naive_estimate.astype(int), np.array(measurement_states).astype(int), 5, 0.3)
 viz4.shrink_to_fit_state_sequence(naive_estimate.astype(int), 0)
+
+plt.show()

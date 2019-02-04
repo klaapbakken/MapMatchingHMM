@@ -10,7 +10,6 @@ def spatially_closest_states(measurement_array, state_space):
         z = measurement_array[row, :]
         if np.isnan(z).any():
             z = locate_last_non_missing_position(row, measurement_array)
-        print(z)
         distance_to_states = dict()
         distance_to_closest_state = np.inf
         id_of_closest_state = None
