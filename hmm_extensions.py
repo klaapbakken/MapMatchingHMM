@@ -10,7 +10,9 @@ def probability_of_signal_given_state(signal_strength, state, base_position, max
     #Problem: Missing data will cascade through algorithm
     #Solution: Use measurement position if available. Otherwise current solution
     distance_to_state = np.linalg.norm(base_position - np.array([closest_x, closest_y]))
-    if signal_strength == 0:
+    if np.isnan(signal_strength):
+        return 1
+    elif signal_strength == 0:
         return bernoulli.pmf(0, max(0, 1 - distance_to_state/max_range))
     else:
         return bernoulli.pmf(1, max(0, 1 - distance_to_state/max_range))*beta.pdf(signal_strength, 2, 5*distance_to_state/max_range)
