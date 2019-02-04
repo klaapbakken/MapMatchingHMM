@@ -1,17 +1,17 @@
 # MapMatchingHMM
 
-Map Matching using Hidden Markov Models
+Map Matching using Hidden Markov Models.
 
-The method can be tested by calling 
+A route is simulated together with related observations. The observations are intended to resemble GPS - measurements and signals received from things such WiFi Access Points and cellphone towers. 
+
+The conditional probabilties of the state sequences given observations are estimated using the Forward-Backward algorithm. The MAP sequence of segments is found using Viterbi.
+
+The method can be tested by calling
 
 ```
-python main.py <password> <desired action>
+python main2_remote.py
 ```
 
-This requries that there exists a PostGIS database created using the Osmosis command-line application.
-The name of the database should be "geodatabase" and the password should be ``<password>``. 
+Requirements are listed in requirements.txt. Installation instructions (using conda) can be seen at the top of the file.
 
-If ``<desired action> == cache``, the script assumes that transition probabilites are saved to P.npy, 
-and loads this instead of recomputing. 
-
-The packages used will be posted at a later date. Python 3.5.6 has been used. 
+Please note that this is a work in progresss.
