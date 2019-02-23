@@ -1,5 +1,6 @@
 import numpy as np
 import utm
+import random
 
 from tools import convert_to_utm
 
@@ -89,3 +90,61 @@ def create_state_space_representations(highways, node_dict):
                 id_tag += 1
     
     return state_space
+
+def add_neighbours(network_set, node, edges):
+    for edge in edges:
+        if node in edge:
+            network_set = network_set.union(set(edge))
+    return network_set
+
+def find_connected_graphs(state_space):
+    all_edges = [set(state['edge']) for state in state_space]
+    all_nodes = set.union(*all_edges)
+    
+    nodes_in_a_network = set()
+    all_networks = []
+    for node in all_nodes:
+        if node not in nodes_in_a_network:
+            network = set([node])
+            already_visited = set()
+            current_node = node
+            proceed = True
+            while proceed:
+                network = add_neighbours(network, current_node, all_edges)
+                already_visited.add(current_node)
+                if len(network.difference(already_visited)) != 0:
+                    current_node = random.choice(list(network.difference(already_visited)))
+                else:
+                    proceed = False
+            nodes_in_a_network = nodes_in_a_network.union(network)
+            all_networks.append(network)
+    return all_networks
+
+def remove_unconnected_states(state_space):
+    all_networks = find_connected_graphs(state_space)
+    
+    majority_network = all_networks[0]
+    for network in all_networks:
+        if len(majority_network) < len(network):
+            majority_network = network
+    
+    new_state_space = list()
+    for state in state_space:
+        node_a, node_b = state['edge']
+        if node_a in majority_network or node_b in majority_network:
+            new_state_space.append(state)
+            
+    for i, _ in enumerate(new_state_space):
+        new_state_space[i]['id'] = i
+        
+    return new_state_space
+
+def remove_unconnected_highways(highways, state_space):
+    all_edges = [set(state['edge']) for state in state_space]
+    all_nodes = set.union(*all_edges)
+    accepted_highways = list()
+
+    for highway in highways:
+        if len(set(highway['data']['nd']).intersection(all_nodes)) != 0:
+            accepted_highways.append(highway)
+    return(accepted_highways)

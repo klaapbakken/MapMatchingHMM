@@ -35,12 +35,12 @@ def locate_last_non_missing_position(position_index, position_measurements):
             return position
     return np.apply_along_axis(np.mean, 0, position_measurements[np.invert(np.isnan(position_measurements))].reshape(-1, 2))
 
-def emission_probabilities(position_measurements, gps_variance, signal_measurements, base_positions, base_ranges, state_space):
+def emission_probabilities(position_measurements, gps_variance, signal_measurements, base_locations, base_ranges, state_space):
     ep = np.ones((position_measurements.shape[0], len(state_space)))
     for row, position in enumerate(position_measurements):
         for column, state in enumerate(state_space):
             for i, signal_strength in enumerate(signal_measurements[row, :]):
-                ep[row, column] = ep[row, column]*probability_of_signal_given_state(signal_strength, state, base_positions[i], base_ranges[i])
+                ep[row, column] = ep[row, column]*probability_of_signal_given_state(signal_strength, state, base_locations[i, :], base_ranges[i])
             ep[row, column] = ep[row, column]*probability_of_position_given_state(position, state, gps_variance, position_measurements, row)
     return ep
                 

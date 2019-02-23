@@ -7,6 +7,7 @@ from data_wrangling import create_highway_dict
 from data_wrangling import get_required_nodes
 from data_wrangling import find_intersections
 from data_wrangling import create_state_space_representations
+from data_wrangling import remove_unconnected_states
 
 from simulation import simulate_route
 from simulation import simulate_observations
@@ -31,6 +32,7 @@ import numpy as np
 
 import sys
 
+np.random.seed(3265)
 random.seed(3265)
 
 password = sys.argv[1]
@@ -51,7 +53,8 @@ nodes = query_nodes_postgis_db(required_nodes, password)
 
 node_dict = create_node_dict(nodes)
 
-state_space = create_state_space_representations(accepted_highways, node_dict)
+untrimmed_state_space = create_state_space_representations(accepted_highways, node_dict)
+state_space = remove_unconnected_states(untrimmed_state_space)
 
 print("Size of state space: {}".format(len(state_space)))
 
@@ -84,13 +87,11 @@ tp = transition_probabilties_by_weighting_route_length(state_space, transition_d
 print("Calculating emission probabilities..")
 ep = emission_probabilities(gps_measurements, gps_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
 
-print("Running Forward-backward algorithm..")
 N = len(state_space)
-alpha = forward_recursions(tp, ep, np.array([1/N]*N))
-beta = backward_recursions(tp, ep, alpha)
 
 print("Running Viterbi..")
-estimated_states = viterbi(alpha, beta, tp, ep, np.array([1/N]*N))
+estimated_states = viterbi(tp, ep, np.array([1/N]*N))
+
 
 naive_estimate = spatially_closest_states(gps_measurements, state_space)
 

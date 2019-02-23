@@ -208,7 +208,7 @@ def backward_recursions(P, l, alpha):
             beta[t, i] = np.sum(P[i, :]*(l[t + 1, :]/np.sum(l[t+1, :]))*beta[t + 1, :])
     return beta
 
-def viterbi(alpha, beta, P, l, pi):
+def viterbi(P, l, pi):
     n_states = P.shape[0]
     n_observations = l.shape[0]
     
@@ -232,3 +232,9 @@ def viterbi(alpha, beta, P, l, pi):
         q_star[t] = phi[t+1, int(q_star[t+1])]
     
     return q_star
+
+def viterbi_estimate_to_state_estimate(viterbi_estimate, state_space):
+    state_estimate = list()
+    for estimate in viterbi_estimate:
+        state_estimate.append(state_space[int(estimate)]['id'])
+    return np.array(state_estimate)

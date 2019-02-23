@@ -37,7 +37,7 @@ random.seed(3265)
 
 print("Fetching and processing data..")
 
-bbox = [10.366042,63.421885,10.408271,63.435746]
+#bbox = [10.366042,63.421885,10.408271,63.435746]
 ways = query_ways_postgis_db(bbox, password)
 
 accepted_highways = get_accepted_highways(ways)
