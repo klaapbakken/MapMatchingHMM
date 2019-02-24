@@ -2,6 +2,7 @@ from hmm import closest_point
 
 import numpy as np
 
+
 from scipy.stats import beta, bernoulli
 
 def probability_of_signal_given_state(signal_strength, state, base_position, max_range):

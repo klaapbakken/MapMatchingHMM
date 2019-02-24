@@ -33,6 +33,7 @@ from itertools import product
 import random
 import numpy as np
 
+
 import pickle
 
 import sys
@@ -78,12 +79,16 @@ def get_estimates(gps_measurements_list, signal_measurements_list, emission_vari
     for gps_measurements, signal_measurements in zip(gps_measurements_list, signal_measurements_list):
         print("Route #{}".format(i + 1))
 
+        print("Transition probabilities..")
+
         tp = transition_probabilties_by_weighting_route_length(state_space,\
                                                            transition_decay, maximum_route_length)
 
+        print("Emission probabilities..")
         ep = emission_probabilities(gps_measurements, emission_variance, signal_measurements,\
                                 base_locations, np.array([base_max_range]*base_locations.shape[0]), state_space)
 
+        print("Viterbi..")
         pi = np.ones((len(state_space), ))/len(state_space)
         estimated_states = viterbi(tp, ep, pi)
         estimated_states_list.append(estimated_states)
@@ -123,13 +128,13 @@ print("Size of state space: {}".format(len(state_space)))
 highway_dict = create_highway_dict(highways_in_state_space)
 intersections = find_intersections(highway_dict, node_dict)
 
-n = 5
+n = 1
 route_length = 50
 
 routes = simulate_routes(n, highway_dict, intersections, route_length)
 
-base_max_range = 1000
-base_locations = [generate_base_locations(bbox, 5), generate_base_locations(bbox, 20)]
+base_max_range = 250
+base_locations = [generate_base_locations(bbox, 0), generate_base_locations(bbox, 25)]
 
 polling_frequencies = [1/5, 1/15]
 missing_data = [True, False]
@@ -137,7 +142,7 @@ observation_simulation_parameters = list(product(polling_frequencies, base_locat
 
 measurements = list()
 
-gps_variance = 2
+gps_variance = 5
 speed_limit = 5
 
 base_locations_list = list()
@@ -164,9 +169,9 @@ pickling_routes_on.close()
 pickling_measurements_on.close()
 
 
-maximum_route_length = 10
+maximum_route_length = 200
 emission_variances = [1, 5]
-transition_decays = [10, 100]
+transition_decays = [1/10, 1/100]
 estimation_parameters = list(product(emission_variances, transition_decays))
 
 print("Estimating states..")
@@ -183,11 +188,11 @@ for i, measurement in enumerate(measurements):
         print("Estimation run #{}".format(j + 1))
         emission_variance = parameter_list[0]
         transition_decay = parameter_list[1]
-
+        print("Estimation..")
         estimated_states_list, naive_estimates_list =\
             get_estimates(gps_measurements_list, signal_measurements_list, emission_variance,\
                 transition_decay, maximum_route_length, base_locations, base_max_range)
-
+        print("Benchmark estimation..")
         estimates.append(estimated_states_list)
         naive_estimates.append(naive_estimates_list)
 

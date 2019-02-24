@@ -35,11 +35,10 @@ import sys
 np.random.seed(3265)
 random.seed(3265)
 
-password = sys.argv[1]
+password = "obf17061994"
 
 print("Fetching and processing data..")
 
-#bbox = [10.366042,63.421885,10.408271,63.435746]
 bbox = [10.411165,63.415631,10.432451,63.425788]
 ways = query_ways_postgis_db(bbox, password)
 
@@ -65,10 +64,11 @@ starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 speed_limit = 5
 polling_frequency = 1/15
-gps_variance = 1
+gps_variance = 5
+measurement_variance = 2
 transition_decay = 1/100
 maximum_route_length = 200
-no_of_bases = 1
+no_of_bases = 5
 base_max_range = 500
 route_length = 50
 
@@ -85,7 +85,7 @@ print("Calculating transition probabilities..")
 tp = transition_probabilties_by_weighting_route_length(state_space, transition_decay, maximum_route_length)
 
 print("Calculating emission probabilities..")
-ep = emission_probabilities(gps_measurements, gps_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
+ep = emission_probabilities(gps_measurements, measurement_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
 
 N = len(state_space)
 
