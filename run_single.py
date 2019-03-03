@@ -35,7 +35,7 @@ import sys
 np.random.seed(3265)
 random.seed(3265)
 
-password = "obf17061994"
+password = sys.argv[1]
 
 print("Fetching and processing data..")
 
