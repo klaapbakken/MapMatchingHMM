@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 import random
 
@@ -6,6 +7,9 @@ from simulation import simulate_route
 from simulation import simulate_observations
 
 from hmm import transition_probabilties_by_weighting_route_length
+from hmm import viterbi
+
+from validation import distance_to_true_state
 
 from hmm_extensions import emission_probabilities
 
@@ -21,7 +25,7 @@ def simulate_routes(n, highway_dict, intersections, route_length):
 
     return routes
 
-def simulate_measurements(polling_frequency, missing_data, routes, base_locations, base_max_range, gps_variance, speed_limit):
+def simulate_measurements(node_dict, state_space, polling_frequency, missing_data, routes, base_locations, base_max_range, gps_variance, speed_limit):
     print(base_locations.shape)
     gps_measurements_list = list()
     signal_measurements_list = list()
@@ -36,6 +40,7 @@ def simulate_measurements(polling_frequency, missing_data, routes, base_location
         signal_measurements_list.append(signal_measurements)
 
         if missing_data:
+            np.random.seed(250)
             N = gps_measurements.shape[0]
             missing_indices = np.random.choice(np.arange(N), np.floor(N/5).astype(int), replace=False)
             gps_measurements[missing_indices, :] = np.nan
@@ -44,7 +49,7 @@ def simulate_measurements(polling_frequency, missing_data, routes, base_location
 
     return gps_measurements_list, signal_measurements_list, measurement_states_list
 
-def get_estimates(gps_measurements_list, signal_measurements_list, emission_variance, transition_decay, maximum_route_length, base_locations, base_max_range):
+def get_estimates(state_space, gps_measurements_list, signal_measurements_list, emission_variance, transition_decay, maximum_route_length, base_locations, base_max_range):
     estimated_states_list = list()
     naive_estimates_list = list()
     
@@ -74,30 +79,35 @@ def get_estimates(gps_measurements_list, signal_measurements_list, emission_vari
     return estimated_states_list, naive_estimates_list
 
 def results_as_dataframe(measurements, estimates, naive_estimates,\
-                         simulation_parameters, estimation_parameters):
+                         simulation_parameters, estimation_parameters, state_space):
     measurements_df = pd.DataFrame(columns=["route_id", "polling_frequency", "no_of_bases",\
                                             "missing_data", "transition_decay", "emission_variance", \
-                                           "hmm_accuracy", "benchmark_accuracy"])
+                                           "hmm_accuracy", "benchmark_accuracy",
+                                           "hmm_dist", "benchmark_dist"])
     row = 0
     number_of_routes = len(measurements[0][0])
     for n in range(number_of_routes):
         for i, measurement in enumerate(measurements):
 
             polling_frequency = simulation_parameters[i][0]
-            bases = observation_simulation_parameters[i][1].shape[0]
-            missing_data = observation_simulation_parameters[i][2]
+            bases = simulation_parameters[i][1].shape[0]
+            missing_data = simulation_parameters[i][2]
             
             
             m = len(estimation_parameters)
             k = 0
             for j in range(m*i, m*(i+1)):
-                hmm_acc = np.mean(estimates[j][n] == measurement[2][n])
-                benchmark_acc = np.mean(naive_estimates[j][n] == measurement[2][n])
+                true_states = measurement[2][n]
+                hmm_acc = np.mean(estimates[j][n] == true_states)
+                hmm_dist = np.mean(distance_to_true_state(estimates[j][n], true_states, state_space))
+                benchmark_acc = np.mean(naive_estimates[j][n] == true_states)
+                benchmark_dist = np.mean(distance_to_true_state(naive_estimates[j][n], true_states, state_space))
                 emission_variance = estimation_parameters[k][0]
                 transition_decay = estimation_parameters[k][1]
                 measurements_df.loc[row] = [n + 1, polling_frequency, bases, missing_data,\
                                           transition_decay, emission_variance,
-                                         hmm_acc, benchmark_acc]
+                                         hmm_acc, benchmark_acc,
+                                         hmm_dist, benchmark_dist]
                 k += 1
                 row += 1
                 

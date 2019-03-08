@@ -6,6 +6,7 @@ from data_wrangling import create_highway_dict
 from data_wrangling import get_required_nodes
 from data_wrangling import find_intersections
 from data_wrangling import create_state_space_representations
+from data_wrangling import remove_unconnected_states
 
 from simulation import simulate_route
 from simulation import simulate_observations
@@ -31,9 +32,11 @@ import matplotlib.pyplot as plt
 
 import sys
 
+np.random.seed(3265)
+random.seed(3265)
+
 print("Fetching and processing data..")
 
-#bbox = [10.366042,63.421885,10.408271,63.435746]
 bbox = [10.411165,63.415631,10.432451,63.425788]
 nodes, ways = query_osm_api(bbox)
 
@@ -45,7 +48,8 @@ highway_dict = create_highway_dict(accepted_highways)
 
 node_dict = create_node_dict(nodes)
 
-state_space = create_state_space_representations(accepted_highways, node_dict)
+untrimmed_state_space = create_state_space_representations(accepted_highways, node_dict)
+state_space = remove_unconnected_states(untrimmed_state_space)
 
 print("Size of state space: {}".format(len(state_space)))
 
@@ -56,10 +60,11 @@ starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
 speed_limit = 5
 polling_frequency = 1/15
-gps_variance = 1
+gps_variance = 5
+measurement_variance = 2
 transition_decay = 1/100
 maximum_route_length = 200
-no_of_bases = 1
+no_of_bases = 5
 base_max_range = 500
 route_length = 50
 
@@ -76,44 +81,15 @@ print("Calculating transition probabilities..")
 tp = transition_probabilties_by_weighting_route_length(state_space, transition_decay, maximum_route_length)
 
 print("Calculating emission probabilities..")
-ep = emission_probabilities(gps_measurements, gps_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
-
-print("Running Forward-backward algorithm..")
+ep = emission_probabilities(gps_measurements, measurement_variance, signal_measurements, base_locations, np.array([500]*no_of_bases), state_space)
 
 N = len(state_space)
-alpha = forward_recursions(tp, ep, np.array([1/N]*N))
-beta = backward_recursions(tp, ep, alpha)
 
 print("Running Viterbi..")
-estimated_states = viterbi(alpha, beta, tp, ep, np.array([1/N]*N))
+estimated_states = viterbi(tp, ep, np.array([1/N]*N))
+
 
 naive_estimate = spatially_closest_states(gps_measurements, state_space)
 
 print("Accuracy with naive method: {}".format(np.mean(measurement_states == naive_estimate)))
 print("Accuracy with hidden markov model: {}".format(np.mean(estimated_states == measurement_states)))
-
-from visualization import MapMatchingVisualization
-
-viz1 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
-viz1.plot_road_network('black', 0.5, 0.4)
-viz1.plot_node_sequence(simulated_route, 'blue')
-viz1.plot_bases(base_locations, 'green', 10)
-viz1.plot_base_range(base_locations, base_max_range)
-
-viz2 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
-viz2.plot_road_network('black', 0.5, 0.4)
-viz2.plot_state_sequence(np.array(measurement_states), 'magenta', 0.5, label=True)
-viz2.plot_coordinate_array(gps_measurements, 'black', 10, signal_measurements=signal_measurements)
-viz2.shrink_to_fit_state_sequence(np.array(measurement_states), 0)
-
-viz3 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
-viz3.plot_road_network('black', 0.5, 0.4)
-viz3.plot_estimation_performance(estimated_states.astype(int), np.array(measurement_states).astype(int), 5, 0.3)
-viz3.shrink_to_fit_state_sequence(estimated_states.astype(int), 0)
-
-viz4 = MapMatchingVisualization(accepted_highways, node_dict, state_space, (25, 15))
-viz4.plot_road_network('black', 0.5, 0.4)
-viz4.plot_estimation_performance(naive_estimate.astype(int), np.array(measurement_states).astype(int), 5, 0.3)
-viz4.shrink_to_fit_state_sequence(naive_estimate.astype(int), 0)
-
-plt.show()

@@ -39,7 +39,7 @@ password = sys.argv[1]
 
 print("Fetching and processing data..")
 
-bbox = [10.411165,63.415631,10.432451,63.425788]
+bbox = [10.3914799928,63.4271680224,10.4036679506,63.4323125008]
 ways = query_ways_postgis_db(bbox, password)
 
 accepted_highways = get_accepted_highways(ways)
@@ -62,15 +62,15 @@ intersections = find_intersections(highway_dict, node_dict)
 starting_highway = random.choice(list(highway_dict.keys()))
 starting_node = random.choice(highway_dict[starting_highway]['data']['nd'])
 
-speed_limit = 5
+speed_limit = 8
 polling_frequency = 1/15
 gps_variance = 5
-measurement_variance = 2
-transition_decay = 1/100
-maximum_route_length = 200
-no_of_bases = 5
-base_max_range = 500
-route_length = 50
+measurement_variance = 1
+transition_decay = 1/500
+maximum_route_length = speed_limit/polling_frequency*2
+no_of_bases = 50
+base_max_range = 50
+route_length = 200
 
 print("Simulating route..")
 
