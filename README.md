@@ -11,7 +11,7 @@ The conditional probabilties of the state sequences given observations are estim
 The method can be tested by calling
 
 ```
-python main2_remote.py
+python run_single_remotely.py
 ```
 
 Requirements are listed in requirements.txt. Installation instructions (using conda) can be seen at the top of the file.
