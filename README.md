@@ -1,5 +1,7 @@
 # MapMatchingHMM
 
+**This project has been abandoned.The functionality is replaced by [`tmmpy`](https://github.com/klaapbakken/tmmpy) and [`hmmpy`](https://github.com/klaapbakken/hmmpy).**
+
 Map Matching using Hidden Markov Models.
 
 The data used to represent road networks is obtained from OpenStreetMap.
